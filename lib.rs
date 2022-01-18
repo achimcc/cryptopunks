@@ -259,6 +259,16 @@ mod cryptopunks {
         /// Imports `ink_lang` so we can use `#[ink::test]`.
         use ink_lang as ink;
 
+        fn set_sender(sender: AccountId, amount: Balance) {
+            ink_env::test::push_execution_context::<Environment>(
+                sender,
+                ink_env::account_id::<Environment>(),
+                1000000,
+                amount,
+                ink_env::test::CallData::new(ink_env::call::Selector::new([0x00; 4])), /* dummy */
+            );
+        }
+
         /// We test if the default constructor does its job.
         #[ink::test]
         fn new_works() {
@@ -278,16 +288,34 @@ mod cryptopunks {
             let accounts =
                 ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
                     .expect("Cannot get accounts");
-            let balance = ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice).expect("Alice has no Account Balance");
+            let _balance = ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice).expect("Alice has no Account Balance");
             cryptopunks.get_punk(0);
 
-            cryptopunks.get_punk(1);
+        }
 
-            cryptopunks.get_punk(2);
+        #[ink::test]
+        fn sale_works() {
+            // Constructor works.
+            let mut cryptopunks = Cryptopunks::new();
 
-            cryptopunks.transfer_punk( accounts.bob, 0);
+            let accounts =
+                ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
+                    .expect("Cannot get accounts");
+            let _balance = ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice).expect("Alice has no Account Balance");
 
-            cryptopunks.offer_punk_for_sale(1, 100000, None);
+            set_sender(accounts.alice, 0);
+
+            cryptopunks.get_punk(0);
+
+            cryptopunks.offer_punk_for_sale(0, 100000, None);
+
+            set_sender(accounts.charlie, 100000);
+
+            cryptopunks.buy_punk(0);
+
+            set_sender(accounts.alice, 0);
+
+            cryptopunks.withdraw();
         }
 
     }
