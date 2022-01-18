@@ -259,6 +259,7 @@ mod cryptopunks {
         /// Imports `ink_lang` so we can use `#[ink::test]`.
         use ink_lang as ink;
 
+        // Helper Function to set the execution context for the next Contract Call 
         fn set_sender(sender: AccountId, amount: Balance) {
             ink_env::test::push_execution_context::<Environment>(
                 sender,
@@ -274,17 +275,12 @@ mod cryptopunks {
         fn new_works() {
             // Constructor works.
             let _cryptopunks = Cryptopunks::new();
-
-            //  // Transfer event triggered during initial construction.
-            //  let emitted_events = ink_env::test::recorded_events().collect::<Vec<_>>();
-            //  assert_eq!(1, emitted_events.len());
         }
 
+        // We test if Alice can obtain an available Punk 
         #[ink::test]
         fn get_works() {
-            // Constructor works.
             let mut cryptopunks = Cryptopunks::new();
-
             let accounts = ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
                 .expect("Cannot get accounts");
             let _balance =
@@ -293,9 +289,9 @@ mod cryptopunks {
             cryptopunks.get_punk(0);
         }
 
+        // We test if Alice can obtain a Punk and sell it to Charlie  
         #[ink::test]
         fn sale_works() {
-            // Constructor works.
             let mut cryptopunks = Cryptopunks::new();
 
             let accounts = ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
