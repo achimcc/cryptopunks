@@ -285,12 +285,12 @@ mod cryptopunks {
             // Constructor works.
             let mut cryptopunks = Cryptopunks::new();
 
-            let accounts =
-                ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
-                    .expect("Cannot get accounts");
-            let _balance = ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice).expect("Alice has no Account Balance");
+            let accounts = ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
+                .expect("Cannot get accounts");
+            let _balance =
+                ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice)
+                    .expect("Alice has no Account Balance");
             cryptopunks.get_punk(0);
-
         }
 
         #[ink::test]
@@ -298,10 +298,11 @@ mod cryptopunks {
             // Constructor works.
             let mut cryptopunks = Cryptopunks::new();
 
-            let accounts =
-                ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
-                    .expect("Cannot get accounts");
-            let _balance = ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice).expect("Alice has no Account Balance");
+            let accounts = ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
+                .expect("Cannot get accounts");
+            let _balance =
+                ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice)
+                    .expect("Alice has no Account Balance");
 
             set_sender(accounts.alice, 0);
 
@@ -317,6 +318,5 @@ mod cryptopunks {
 
             cryptopunks.withdraw();
         }
-
     }
 }
