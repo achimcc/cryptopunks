@@ -190,7 +190,7 @@ mod cryptopunks {
 
         #[ink(message, payable)]
         pub fn buy_punk(&mut self, punk_index: u32) {
-            let balance = self.env().transferred_balance();
+            let balance = self.env().transferred_value();
             let offer = self
                 .punks_offered_for_sale
                 .get(punk_index)
@@ -236,15 +236,14 @@ mod cryptopunks {
 
         #[ink(message)]
         pub fn withdraw(&mut self) {
+            let caller = self.env().caller();
             let amount = self
                 .pending_withdrawals
-                .get(self.env().caller())
+                .get(caller)
                 .expect("No pending withdrawals for caller");
             assert!(amount > 0, "No remaining balance to withdraw!");
             self.pending_withdrawals.insert(self.env().caller(), &0);
-            self.env()
-                .transfer(self.env().caller(), amount)
-                .expect("Transfer failed");
+            self.env().transfer(caller, amount).expect("Transfer failed");
         }
     }
 
@@ -261,9 +260,9 @@ mod cryptopunks {
 
         // Helper Function to set the execution context for the next Contract Call 
         fn set_sender(sender: AccountId, amount: Balance) {
-            ink_env::test::push_execution_context::<Environment>(
+            ink_env::test::push_execution_context::<ink_env::DefaultEnvironment>(
                 sender,
-                ink_env::account_id::<Environment>(),
+                ink_env::account_id::<ink_env::DefaultEnvironment>(),
                 1000000,
                 amount,
                 ink_env::test::CallData::new(ink_env::call::Selector::new([0x00; 4])), /* dummy */
