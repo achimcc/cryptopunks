@@ -204,7 +204,7 @@ mod cryptopunks {
                 );
             };
 
-            assert!(balance >= offer.min_value, "Offer for punk is to low!");
+            assert!(balance >= offer.min_value, "Offer for punk is too low!");
             assert_eq!(
                 self.punk_index_to_address.get(punk_index),
                 Some(offer.seller),
@@ -243,13 +243,16 @@ mod cryptopunks {
                 .expect("No pending withdrawals for caller");
             assert!(amount > 0, "No remaining balance to withdraw!");
             self.pending_withdrawals.insert(self.env().caller(), &0);
-            self.env().transfer(caller, amount).expect("Transfer failed");
+            self.env()
+                .transfer(caller, amount)
+                .expect("Transfer failed");
         }
     }
 
     /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
     /// module and test functions are marked with a `#[test]` attribute.
     /// The below code is technically just normal Rust code.
+    #[cfg(feature = "ink-experimental-engine")]
     #[cfg(test)]
     mod tests {
         /// Imports all the definitions from the outer scope so we can use them here.
@@ -258,15 +261,14 @@ mod cryptopunks {
         /// Imports `ink_lang` so we can use `#[ink::test]`.
         use ink_lang as ink;
 
-        // Helper Function to set the execution context for the next Contract Call 
-        fn set_sender(sender: AccountId, amount: Balance) {
-            ink_env::test::push_execution_context::<ink_env::DefaultEnvironment>(
-                sender,
-                ink_env::account_id::<ink_env::DefaultEnvironment>(),
-                1000000,
-                amount,
-                ink_env::test::CallData::new(ink_env::call::Selector::new([0x00; 4])), /* dummy */
-            );
+        // Helper Function to set the execution context for the next Contract Call
+        fn set_sender(sender: AccountId) {
+            ink_env::test::set_caller::<ink_env::DefaultEnvironment>(sender);
+        }
+
+        // Helper Function to set the execution context for the next Contract Call
+        fn set_balance(sender: AccountId, amount: Balance) {
+            ink_env::test::set_account_balance::<ink_env::DefaultEnvironment>(sender, amount)
         }
 
         /// We test if the default constructor does its job.
@@ -276,42 +278,48 @@ mod cryptopunks {
             let _cryptopunks = Cryptopunks::new();
         }
 
-        // We test if Alice can obtain an available Punk 
+        // We test if Alice can obtain an available Punk
         #[ink::test]
         fn get_works() {
             let mut cryptopunks = Cryptopunks::new();
-            let accounts = ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
-                .expect("Cannot get accounts");
+            let accounts = ink_env::test::default_accounts::<ink_env::DefaultEnvironment>();
             let _balance =
                 ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice)
                     .expect("Alice has no Account Balance");
             cryptopunks.get_punk(0);
         }
 
-        // We test if Alice can obtain a Punk and sell it to Charlie  
+        // We test if Alice can obtain a Punk and sell it to Charlie
         #[ink::test]
         fn sale_works() {
             let mut cryptopunks = Cryptopunks::new();
 
-            let accounts = ink_env::test::default_accounts::<ink_env::DefaultEnvironment>()
-                .expect("Cannot get accounts");
-            let _balance =
+            let accounts = ink_env::test::default_accounts::<ink_env::DefaultEnvironment>();
+            let balance =
                 ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice)
                     .expect("Alice has no Account Balance");
 
-            set_sender(accounts.alice, 0);
+            set_sender(accounts.alice);
 
             cryptopunks.get_punk(0);
 
             cryptopunks.offer_punk_for_sale(0, 100000, None);
 
-            set_sender(accounts.charlie, 100000);
+            set_sender(accounts.charlie);
+            set_balance(accounts.charlie, 200000);
+            ink_env::test::set_value_transferred::<ink_env::DefaultEnvironment>(100000);
 
             cryptopunks.buy_punk(0);
 
-            set_sender(accounts.alice, 0);
+            set_sender(accounts.alice);
 
             cryptopunks.withdraw();
+
+            let new_balance =
+                ink_env::test::get_account_balance::<ink_env::DefaultEnvironment>(accounts.alice)
+                    .expect("Alice has no Account Balance");
+
+            assert_eq!(balance, new_balance);
         }
     }
 }
